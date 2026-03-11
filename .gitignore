@@ -1,0 +1,42 @@
+# Секреты и конфиги
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Ключи и сервисные аккаунты
+service_account.json
+*-????????????????????????????????.json
+compelling-art-*.json
+
+# Local data: logs, temp files (never commit)
+local/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Legacy paths (if present)
+chat_logs/*.txt
+test_chat_log.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
