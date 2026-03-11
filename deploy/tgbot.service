@@ -2,7 +2,7 @@
 # После правок: sudo systemctl daemon-reload && sudo systemctl enable tgbot && sudo systemctl start tgbot
 
 [Unit]
-Description=TgBot (Паша Техник)
+Description=TgBot (Митрич Суровый)
 After=network.target
 
 [Service]

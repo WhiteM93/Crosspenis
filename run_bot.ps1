@@ -9,6 +9,7 @@ param(
 
 $ScriptDir = $PSScriptRoot
 $BotScript = Join-Path $ScriptDir "bot.py"
+$PythonExe = if (Test-Path (Join-Path $ScriptDir "venv\Scripts\python.exe")) { Join-Path $ScriptDir "venv\Scripts\python.exe" } else { "python" }
 $OllamaBase = "http://localhost:11434"
 $ModelName = "gemma2:9b"
 
@@ -91,7 +92,7 @@ function Start-Bot {
         return
     }
     Set-Location $ScriptDir
-    Start-Process python -ArgumentList "bot.py" -WorkingDirectory $ScriptDir -WindowStyle Normal
+    Start-Process $PythonExe -ArgumentList "bot.py" -WorkingDirectory $ScriptDir -WindowStyle Normal
     Write-Host "Bot started in new window."
 }
 

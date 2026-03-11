@@ -1,6 +1,6 @@
 """
 Графический лаунчер TgBot: запуск/остановка бота и статус Ollama.
-Запуск: python launcher.py  (или двойной клик по launcher.py)
+Запуск без консоли: pythonw launcher.py  (или двойной клик по «Запуск бота.bat»).
 """
 from __future__ import annotations
 
@@ -31,6 +31,13 @@ try:
     import httpx
 except ImportError:
     httpx = None
+
+try:
+    import pystray
+    from PIL import Image
+    TRAY_AVAILABLE = True
+except ImportError:
+    TRAY_AVAILABLE = False
 
 # Корень проекта — папка, где лежит launcher.py
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -77,7 +84,7 @@ class LauncherApp(ctk.CTk):
         ctk.set_appearance_mode("Dark")
         ctk.set_default_color_theme("blue")
 
-        self.title("TgBot — Паша Техник")
+        self.title("TgBot — Митрич Суровый")
         self.geometry("420x380")
         self.minsize(380, 340)
         self._after_id = None
@@ -178,7 +185,62 @@ class LauncherApp(ctk.CTk):
         )
         self.label_msg.pack(side="bottom", pady=(8, 16))
 
+        self._tray_icon = None
+        if TRAY_AVAILABLE:
+            self._setup_tray()
+            self.protocol("WM_DELETE_WINDOW", self._hide_to_tray)
+            self.bind("<Unmap>", self._on_unmap)
+
         self._refresh()
+
+    def _setup_tray(self) -> None:
+        """Иконка в трее: Открыть / Выход."""
+        try:
+            size = 64
+            img = Image.new("RGB", (size, size), color=(55, 95, 140))
+            for y in range(size):
+                for x in range(size):
+                    if (x - size // 2) ** 2 + (y - size // 2) ** 2 < (size // 3) ** 2:
+                        img.putpixel((x, y), (80, 140, 200))
+            menu = pystray.Menu(
+                pystray.MenuItem("Открыть", self._show_from_tray, default=True),
+                pystray.MenuItem("Выход", self._quit_from_tray),
+            )
+            self._tray_icon = pystray.Icon("tgbot", img, "TgBot — Митрич Суровый", menu=menu)
+            threading.Thread(target=self._tray_icon.run_detached, daemon=True).start()
+        except Exception:
+            pass
+
+    def _hide_to_tray(self) -> None:
+        """Свернуть в трей (крестик или минимизация)."""
+        self.withdraw()
+
+    def _on_unmap(self, event) -> None:
+        """При минимизации — убрать в трей вместо панели задач."""
+        if self.state() == "iconic":
+            self.after(10, self.withdraw)
+
+    def _show_from_tray(self, *args) -> None:
+        """Показать окно из трея (вызов из потока иконки)."""
+        self.after(0, self._do_show_from_tray)
+
+    def _do_show_from_tray(self) -> None:
+        self.deiconify()
+        self.lift()
+        self.focus_force()
+
+    def _quit_from_tray(self, *args) -> None:
+        """Выход из трея."""
+        self.after(0, self._do_quit)
+
+    def _do_quit(self) -> None:
+        if self._tray_icon:
+            try:
+                self._tray_icon.stop()
+            except Exception:
+                pass
+        self.destroy()
+        sys.exit(0)
 
     def _set_msg(self, text: str) -> None:
         self.label_msg.configure(text=text)
@@ -242,10 +304,13 @@ class LauncherApp(ctk.CTk):
             self._set_msg(f"Файл не найден: {BOT_SCRIPT}")
             return
         try:
+            flags = 0
+            if os.name == "nt":
+                flags = subprocess.CREATE_NO_WINDOW  # без отдельного окна консоли
             subprocess.Popen(
                 [sys.executable, str(BOT_SCRIPT)],
                 cwd=str(PROJECT_ROOT),
-                creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == "nt" else 0,
+                creationflags=flags,
             )
             self._set_msg("Бот запускается…")
             self.after(2000, self._refresh)

@@ -1,5 +1,4 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-python launcher.py
-pause
+if exist "venv\Scripts\pythonw.exe" (start "" venv\Scripts\pythonw.exe launcher.py) else (start "" pythonw launcher.py)

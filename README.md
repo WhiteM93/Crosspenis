@@ -1,6 +1,6 @@
-# TgBot — Pasha Tekhnik
+# TgBot — Митрич Суровый
 
-A Telegram bot powered by a local LLM (Ollama). The bot acts as **Pasha Tekhnik** — a rude Russian rapper character: foul-mouthed, sarcastic, and direct.
+A Telegram bot powered by a local LLM (Ollama). The bot acts as **Митрич Суровый (Mitrich Surovy)** — a stern, rude character: foul-mouthed, sarcastic, and direct.
 
 ---
 
