@@ -82,6 +82,12 @@ check_env() {
     if [[ -z "${token// }" ]]; then
         fail "В .env не задан TOKEN (или BOT_TOKEN)"
     fi
+
+    # Windows CRLF в .env ломает токен в systemd/python
+    if grep -q $'\r' "$env_file" 2>/dev/null; then
+        warn "Убираю Windows-переносы строк в .env"
+        sed -i 's/\r$//' "$env_file"
+    fi
     ok ".env в порядке"
 }
 
@@ -112,6 +118,34 @@ setup_venv() {
     run_as_user "$venv_python" -m pip install -q --upgrade pip
     run_as_user "$venv_python" -m pip install -q -r "$APP_DIR/requirements.txt"
     ok "Зависимости установлены"
+}
+
+smoke_test_app() {
+    log "Проверка приложения (токен, импорты)"
+    local venv_python="$APP_DIR/venv/bin/python"
+
+    if ! run_as_user "$venv_python" -c "
+from pathlib import Path
+import os, sys
+from dotenv import load_dotenv
+load_dotenv(Path('${APP_DIR}') / '.env')
+token = (os.environ.get('TOKEN') or os.environ.get('BOT_TOKEN') or '').strip()
+if not token:
+    print('TOKEN не загружен из .env', file=sys.stderr)
+    sys.exit(1)
+import aiogram  # noqa: F401
+print('ok')
+"; then
+        fail "Бот не стартует даже вручную — проверьте .env и venv"
+    fi
+    ok "Приложение готово к запуску"
+}
+
+show_service_logs() {
+    run_root systemctl status "$SERVICE_NAME" --no-pager -l || true
+    echo ""
+    log "Логи (journalctl -u $SERVICE_NAME -n 40):"
+    run_root journalctl -u "$SERVICE_NAME" -n 40 --no-pager || true
 }
 
 install_systemd_unit() {
@@ -157,7 +191,9 @@ verify_deployment() {
     if run_root systemctl is-active --quiet "$SERVICE_NAME"; then
         ok "Сервис активен"
     else
-        fail "Сервис не запущен"
+        warn "Сервис не запущен — диагностика:"
+        show_service_logs
+        fail "Сервис не запущен — см. логи выше"
     fi
 
     if run_root systemctl is-enabled --quiet "$SERVICE_NAME" 2>/dev/null; then
@@ -195,6 +231,7 @@ main() {
     git_update
     check_env
     setup_venv
+    smoke_test_app
     install_systemd_unit
     restart_service
     verify_deployment
