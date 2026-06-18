@@ -7,10 +7,10 @@ After=network.target
 
 [Service]
 Type=simple
-User=YOUR_USER
-WorkingDirectory=/home/YOUR_USER/crosspenis
+User=__RUN_USER__
+WorkingDirectory=__APP_DIR__
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/home/YOUR_USER/crosspenis/venv/bin/python /home/YOUR_USER/crosspenis/app.py
+ExecStart=__APP_DIR__/venv/bin/python __APP_DIR__/app.py
 Restart=always
 RestartSec=10
 StandardOutput=journal

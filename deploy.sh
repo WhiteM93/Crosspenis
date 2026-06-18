@@ -158,8 +158,8 @@ install_systemd_unit() {
     local tmp_unit
     tmp_unit="$(mktemp)"
     sed \
-        -e "s|YOUR_USER|$RUN_USER|g" \
-        -e "s|/home/YOUR_USER/crosspenis|$APP_DIR|g" \
+        -e "s|__APP_DIR__|$APP_DIR|g" \
+        -e "s|__RUN_USER__|$RUN_USER|g" \
         "$SERVICE_TEMPLATE" > "$tmp_unit"
 
     if [[ ! -f "$SERVICE_FILE" ]] || ! run_root cmp -s "$tmp_unit" "$SERVICE_FILE" 2>/dev/null; then
