@@ -14,6 +14,8 @@ except ImportError:
 from aiogram import Bot, Dispatcher, Router, types, F
 from aiogram.client.default import DefaultBotProperties
 
+from biota_relay import start_biota_relay
+
 TOKEN = (os.environ.get("TOKEN") or os.environ.get("BOT_TOKEN") or "").strip()
 if not TOKEN:
     print("Задай TOKEN в .env (см. .env.example)")
@@ -33,6 +35,7 @@ async def on_help(message: types.Message):
 
 
 async def main():
+    await start_biota_relay(client)
     await dp.start_polling(client)
 
 
