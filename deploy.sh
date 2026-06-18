@@ -141,7 +141,11 @@ install_systemd_unit() {
 
 restart_service() {
     log "Перезапуск $SERVICE_NAME"
-    run_root systemctl restart "$SERVICE_NAME"
+    if ! run_root systemctl restart "$SERVICE_NAME"; then
+        warn "Не удалось запустить сервис — логи:"
+        run_root journalctl -u "$SERVICE_NAME" -n 30 --no-pager || true
+        fail "systemctl restart $SERVICE_NAME завершился с ошибкой"
+    fi
     sleep 2
 }
 
