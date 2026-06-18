@@ -89,16 +89,28 @@ setup_venv() {
     log "Виртуальное окружение и зависимости"
     need_cmd python3
 
-    local venv_python="$APP_DIR/venv/bin/python"
-    local venv_pip="$APP_DIR/venv/bin/pip"
+    local venv_dir="$APP_DIR/venv"
+    local venv_python="$venv_dir/bin/python"
+    local venv_pip="$venv_dir/bin/pip"
+
+    if [[ -d "$venv_dir" ]] && [[ ! -x "$venv_python" || ! -x "$venv_pip" ]]; then
+        warn "Битый venv — пересоздаю"
+        rm -rf "$venv_dir"
+    fi
 
     if [[ ! -x "$venv_python" ]]; then
         log "Создаю venv"
-        run_as_user python3 -m venv "$APP_DIR/venv"
+        if ! run_as_user python3 -m venv "$venv_dir"; then
+            fail "Не удалось создать venv. Установите: sudo apt install -y python3-venv"
+        fi
     fi
 
-    run_as_user "$venv_pip" install -q --upgrade pip
-    run_as_user "$venv_pip" install -q -r "$APP_DIR/requirements.txt"
+    if [[ ! -x "$venv_pip" ]]; then
+        fail "В venv нет pip. Выполните: sudo apt install -y python3-venv && rm -rf $venv_dir && ./deploy.sh"
+    fi
+
+    run_as_user "$venv_python" -m pip install -q --upgrade pip
+    run_as_user "$venv_python" -m pip install -q -r "$APP_DIR/requirements.txt"
     ok "Зависимости установлены"
 }
 
