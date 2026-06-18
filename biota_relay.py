@@ -5,8 +5,15 @@ import os
 from aiohttp import web
 from aiogram import Bot
 
-BIOTA_SECRET = os.getenv("BIOTA_RELAY_SECRET", "")
-DEFAULT_CHAT_ID = os.getenv("BIOTA_DEFAULT_CHAT_ID", "")
+BIOTA_SECRET = (
+    os.getenv("BIOTA_RELAY_SECRET")
+    or os.getenv("BIOTA_NOTIFY_RELAY_SECRET")
+    or ""
+)
+DEFAULT_CHAT_ID = (
+    os.getenv("BIOTA_DEFAULT_CHAT_ID")
+    or os.getenv("BIOTA_TELEGRAM_CHAT_IDS", "").split(",")[0].strip()
+)
 
 
 async def biota_notify(request: web.Request) -> web.Response:
