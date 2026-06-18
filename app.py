@@ -12,37 +12,37 @@ except ImportError:
     pass
 
 from aiogram import Bot, Dispatcher, Router, types, F
+from aiogram.filters import Command
 from aiogram.client.default import DefaultBotProperties
 
 from biota_relay import start_biota_relay
 from biota_commands import router as biota_router
+from keyboards import BOT_COMMANDS, HELP_TEXT, START_TEXT, main_keyboard
 
 TOKEN = (os.environ.get("TOKEN") or os.environ.get("BOT_TOKEN") or "").strip()
 if not TOKEN:
     print("Задай TOKEN в .env (см. .env.example)")
     sys.exit(1)
 
-HELP_TEXT = (
-    "Доступные команды:\n"
-    "!help — эта справка\n"
-    "/svodka — сводка (авто: дневная/ночная)\n"
-    "/svodka_d — дневная смена\n"
-    "/svodka_n — ночная смена"
-)
-
 client = Bot(token=TOKEN, default=DefaultBotProperties())
 dp = Dispatcher()
 router = Router()
-dp.include_router(router)
 dp.include_router(biota_router)
+dp.include_router(router)
+
+
+@router.message(Command("start"))
+async def on_start(message: types.Message):
+    await message.answer(START_TEXT, reply_markup=main_keyboard())
 
 
 @router.message(F.text == "!help")
 async def on_help(message: types.Message):
-    await message.answer(HELP_TEXT)
+    await message.answer(HELP_TEXT, reply_markup=main_keyboard())
 
 
 async def main():
+    await client.set_my_commands(BOT_COMMANDS)
     await start_biota_relay(client)
     await dp.start_polling(client)
 

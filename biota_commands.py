@@ -3,9 +3,11 @@
 import os
 
 import aiohttp
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
+
+from keyboards import BTN_DAY, BTN_HELP, BTN_NIGHT, BTN_SVODKA, HELP_TEXT, main_keyboard
 
 router = Router()
 
@@ -45,19 +47,31 @@ async def _request_summary(chat_id: int, slot: str = "auto") -> tuple[bool, str]
     return True, data.get("text") or "готово"
 
 
+async def _reply_summary(message: Message, slot: str) -> None:
+    wait = await message.answer("⏳ Запрашиваю сводку…", reply_markup=main_keyboard())
+    ok, text = await _request_summary(message.chat.id, slot)
+    await wait.edit_text(text if ok else f"❌ {text}")
+
+
 @router.message(Command("svodka"))
+@router.message(F.text == BTN_SVODKA)
 async def cmd_svodka(message: Message):
-    ok, text = await _request_summary(message.chat.id, "auto")
-    await message.answer(text if ok else f"❌ {text}")
+    await _reply_summary(message, "auto")
 
 
 @router.message(Command("svodka_d"))
+@router.message(F.text == BTN_DAY)
 async def cmd_svodka_day(message: Message):
-    ok, text = await _request_summary(message.chat.id, "morning")
-    await message.answer(text if ok else f"❌ {text}")
+    await _reply_summary(message, "morning")
 
 
 @router.message(Command("svodka_n"))
+@router.message(F.text == BTN_NIGHT)
 async def cmd_svodka_night(message: Message):
-    ok, text = await _request_summary(message.chat.id, "evening")
-    await message.answer(text if ok else f"❌ {text}")
+    await _reply_summary(message, "evening")
+
+
+@router.message(Command("help"))
+@router.message(F.text == BTN_HELP)
+async def cmd_help(message: Message):
+    await message.answer(HELP_TEXT, reply_markup=main_keyboard())
